@@ -6,7 +6,5 @@
 .DS_Store
 /build
 /captures
-<<<<<<< HEAD
-=======
 .externalNativeBuild
->>>>>>> 5aeff21b5840994ee0e180fe263d93c791acbeca
+.idea/misc.xml
