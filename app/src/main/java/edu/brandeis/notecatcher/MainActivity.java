@@ -4,7 +4,9 @@ import edu.brandeis.notecatcher.external.Yin;
 
 import android.content.Intent;
 import android.media.AudioFormat;
+import android.media.AudioManager;
 import android.media.AudioRecord;
+import android.media.AudioTrack;
 import android.media.MediaPlayer;
 import android.media.MediaRecorder;
 import android.os.Bundle;
@@ -16,6 +18,7 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 import java.io.IOException;
+import java.util.ArrayList;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -32,7 +35,6 @@ public class MainActivity extends AppCompatActivity {
     //for real-time analysis
     AudioRecord audioRec;
     Thread recThread;
-    String pitchList = new String();
     float pitch;
 
     private static final int RECORDER_SAMPLERATE = 8000;
@@ -45,6 +47,8 @@ public class MainActivity extends AppCompatActivity {
     int bufferRec = 1024;
     int bytesPerElement = 2;
 
+
+    private ArrayList<short[]> clips = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,7 +67,7 @@ public class MainActivity extends AppCompatActivity {
         pitches.setText(String.valueOf(pitch));
 
         record =(Button) findViewById(R.id.record);
-        int bufferSize =AudioRecord.getMinBufferSize(40000, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT);
+        final int bufferSize =AudioRecord.getMinBufferSize(40000, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT);
 
         audioRec = new AudioRecord(MediaRecorder.AudioSource.MIC, 40000, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, bufferSize);
 
@@ -72,8 +76,6 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 //startRecord(v);
 
-
-
                 if (audioRec.getState() == AudioRecord.STATE_INITIALIZED)
                 {
                     audioRec.setPositionNotificationPeriod(44100 / 2); // should make sure the buffer is a multiple of this
@@ -81,13 +83,17 @@ public class MainActivity extends AppCompatActivity {
                     audioRec.setRecordPositionUpdateListener(
                             new AudioRecord.OnRecordPositionUpdateListener()
                             {
-                                public void onPeriodicNotification(AudioRecord recorder)
+                                public void onPeriodicNotification(final AudioRecord recorder)
                                 {
                                     runOnUiThread(new Runnable()
                                     {
                                         public void run()
                                         {
                                             String lout = String.format("%f Hz", pitch);
+                                            short[] clip = new short[bufferSize];
+                                            recorder.read(clip, 0, bufferSize);
+                                            clips.add(clip);
+                                            System.out.println("!!!!!!!!"+clip);
                                             pitches.setText(lout);
 
                                         }
@@ -99,37 +105,7 @@ public class MainActivity extends AppCompatActivity {
                                 }
                             }
                     );
-
-
                 }
-
-                
-                /*audioRec = new AudioRecord(MediaRecorder.AudioSource.MIC,
-                        RECORDER_SAMPLERATE, RECORDER_CHANNELS,
-                        RECORDER_AUDIO_ENCODING, bufferRec*bytesPerElement);
-                //audioRec.startRecording();
-
-                if (audioRec.getState() == AudioRecord.STATE_INITIALIZED) {
-                    audioRec.setPositionNotificationPeriod(bufferRec);
-                    audioRec.setRecordPositionUpdateListener(new AudioRecord.OnRecordPositionUpdateListener() {
-
-                        @Override
-                        public void onMarkerReached(AudioRecord recorder) {
-                        }
-
-                        @Override
-                        public void onPeriodicNotification(AudioRecord recorder) {
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    pitches.setText(String.valueOf(pitch));
-                                }
-                            });
-                        }
-                    });
-                    //String res = new String();
-                }*/
-
                 Toast.makeText(getApplicationContext(), "Recording..",
                         Toast.LENGTH_SHORT).show();
             }
@@ -146,6 +122,7 @@ public class MainActivity extends AppCompatActivity {
         play.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                play.setText("clicked");
                 playRecord(v);
             }
         });
@@ -175,7 +152,6 @@ public class MainActivity extends AppCompatActivity {
         if (audioRec.getState() == AudioRecord.STATE_INITIALIZED)
         {
             audioRec.startRecording();
-
             Thread lrecorder = new Thread(new Runnable()
             {
                 public void run()
@@ -184,7 +160,6 @@ public class MainActivity extends AppCompatActivity {
                     while (audioRec.getRecordingState() != AudioRecord.RECORDSTATE_STOPPED)
                     {
                         final short[] lshortArray = new short[bufferRec/2];
-
                         audioRec.read(lshortArray, 0, bufferRec/2);
 
                         if (lcounter == 0)
@@ -196,49 +171,15 @@ public class MainActivity extends AppCompatActivity {
                                 pitch = (float)((2.0 * pitch + linstantaneousPitch) / 3.0);
                             }
                         }
-
                         lcounter = (lcounter + 1) % 5;
                     }
                 }
             });
-
             lrecorder.start();
         }
     }
 
 
-   /* @Override
-    protected void onResume() {
-        super.onResume();
-        if (audioRec.getState() == AudioRecord.STATE_INITIALIZED) {
-            audioRec.startRecording();
-            recThread = new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    //getNotes();
-                    int counter = 0;//what for???
-                    while (audioRec.getRecordingState() != AudioRecord.RECORDSTATE_STOPPED) {
-                        short audioData[] = new short[bufferRec];
-                        audioRec.read(audioData, 0, bufferRec);
-
-                        if (counter == 0) {
-                            Yin yin = new Yin(audioRec.getSampleRate());
-                            double instantaneousPitch = yin.getPitch(audioData);
-                            if (instantaneousPitch >= 0)
-                                pitch = (float) ((2 * pitch + instantaneousPitch) / 3);
-                        }
-
-                        counter = (counter + 1) / 5;
-                    }
-
-
-                    //System.out.println("!!!!!!!!!!"+audioData.toString()+"\n");
-                }
-            }, "recordingThread");
-
-            recThread.start();
-        }
-    }*/
 
     public void startRecord (View v) {
         /*try {
@@ -324,7 +265,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void playRecord(View view) {
-        try{
+        /*try{
             mPlayer = new MediaPlayer();
             mPlayer.setDataSource(outputFile);
             mPlayer.prepare();
@@ -337,7 +278,20 @@ public class MainActivity extends AppCompatActivity {
         } catch (Exception e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
+        }*/
+        int bufferSize =AudioRecord.getMinBufferSize(40000, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT);
+
+        AudioTrack at = new AudioTrack(AudioManager.STREAM_MUSIC, 48000, AudioFormat.CHANNEL_OUT_MONO,
+                AudioFormat.ENCODING_PCM_16BIT, bufferSize*4 /* 1 second buffer */,
+                AudioTrack.MODE_STREAM);
+        if(clips.size()>0){
+            System.out.println("it works!!!!!!!!!! "+clips.get(0));
+            at.write(clips.get(0), 0, clips.get(0).length);
+            at.play();
         }
+        else
+            System.out.println("ERROR!!!!!!!!!!");
+
     }
 
     public void stopPlay(View view) {
