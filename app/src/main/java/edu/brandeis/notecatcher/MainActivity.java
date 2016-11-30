@@ -23,14 +23,12 @@ import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
 
-    private MediaRecorder mRecorder;
-    private MediaPlayer mPlayer;
-    private String outputFile = null;
+    //private String outputFile = null;
     private Button record;
     private Button finish;
     private Button play;
     private Button stop;
-    private Button saved;
+    //private Button saved;
 
     //for real-time analysis
     AudioRecord audioRec;
@@ -54,14 +52,15 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        Long tsLong = System.currentTimeMillis()/1000;
+
+        /*Long tsLong = System.currentTimeMillis()/1000;
         String ts = tsLong.toString();
         outputFile = Environment.getExternalStorageDirectory().getAbsolutePath() + "/noteCatcher/"+ts+"Recording.3gpp";
         mRecorder = new MediaRecorder();
         mRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
         mRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
         mRecorder.setAudioEncoder(MediaRecorder.OutputFormat.AMR_NB);
-        mRecorder.setOutputFile(outputFile);
+        mRecorder.setOutputFile(outputFile);*/
 
         pitches = (TextView)findViewById(R.id.pitches);
         pitches.setText(String.valueOf(pitch));
@@ -75,7 +74,6 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 //startRecord(v);
-
                 if (audioRec.getState() == AudioRecord.STATE_INITIALIZED)
                 {
                     audioRec.setPositionNotificationPeriod(44100 / 2); // should make sure the buffer is a multiple of this
@@ -135,13 +133,13 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        saved =(Button)findViewById(R.id.saved);
+        /*saved =(Button)findViewById(R.id.saved);
         saved.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 savedMenu(v);
             }
-        });
+        });*/
     }
 
     @Override
@@ -182,25 +180,10 @@ public class MainActivity extends AppCompatActivity {
 
 
     public void startRecord (View v) {
-        /*try {
-            mRecorder.prepare();
-            mRecorder.start();
-        } catch (IllegalStateException e) {
-            e.printStackTrace();
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-        }
-        record.setEnabled(false);
-        finish.setEnabled(true);*/
-
         audioRec = new AudioRecord(MediaRecorder.AudioSource.MIC,
                 RECORDER_SAMPLERATE, RECORDER_CHANNELS,
                 RECORDER_AUDIO_ENCODING, bufferRec*bytesPerElement);
         audioRec.startRecording();
-
-
-        //String res = new String();
 
         recThread = new Thread(new Runnable() {
             @Override
@@ -220,9 +203,6 @@ public class MainActivity extends AppCompatActivity {
 
                     counter = (counter+1)/5;
                 }
-
-
-                //System.out.println("!!!!!!!!!!"+audioData.toString()+"\n");
             }
         }, "recordingThread");
         recThread.start();
@@ -231,29 +211,8 @@ public class MainActivity extends AppCompatActivity {
                 Toast.LENGTH_SHORT).show();
     }
 
-    /*private void getNotes() {
-        pitches.setText("recording started!!!");
-        short audioData[] = new short[bufferRec];
-        audioRec.read(audioData, 0, bufferRec);
-        pitches.setText(audioData.toString());
-    }*/
 
     public void stopRecord(View v){
-        /*try {
-            mRecorder.stop();
-            mRecorder.release();
-            mRecorder  = null;
-
-            finish.setEnabled(false);
-            play.setEnabled(true);
-
-
-        } catch (IllegalStateException e) {
-            e.printStackTrace();
-        } catch (RuntimeException e) {
-            e.printStackTrace();
-        }*/
-
         if(audioRec!=null){
             audioRec.stop();
             audioRec.release();
@@ -265,20 +224,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void playRecord(View view) {
-        /*try{
-            mPlayer = new MediaPlayer();
-            mPlayer.setDataSource(outputFile);
-            mPlayer.prepare();
-            mPlayer.start();
-            play.setEnabled(false);
-            stop.setEnabled(true);
-
-            Toast.makeText(getApplicationContext(), "Playing..",
-                    Toast.LENGTH_SHORT).show();
-        } catch (Exception e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }*/
         int bufferSize =AudioRecord.getMinBufferSize(40000, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT);
 
         AudioTrack at = new AudioTrack(AudioManager.STREAM_MUSIC, 48000, AudioFormat.CHANNEL_OUT_MONO,
@@ -291,11 +236,10 @@ public class MainActivity extends AppCompatActivity {
         }
         else
             System.out.println("ERROR!!!!!!!!!!");
-
     }
 
     public void stopPlay(View view) {
-        try {
+        /*try {
             if (mPlayer != null) {
                 mPlayer.stop();
                 mPlayer.release();
@@ -307,7 +251,7 @@ public class MainActivity extends AppCompatActivity {
             }
         } catch (Exception e) {
             e.printStackTrace();
-        }
+        }*/
     }
 
     public void savedMenu(View view){
