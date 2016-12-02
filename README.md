@@ -1,7 +1,9 @@
 #NoteCatcher
 
 class project for cosi153
+
 Team BandBangBang
+
 Members: Christina Feng, Jiaqi Li, Shuangchen Shen, Qifu Yin
 
 Important Note: Our application only works well for API under 23 for the use of AudioRecord.
